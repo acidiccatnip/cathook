@@ -369,7 +369,6 @@ end
 -- ─── Tab layouts ─────────────────────────────────────────────────────────────
 
 local tab_layouts = {
-    -- TAB 1: AIMBOT (single column, no triggerbot)
     [1] = {
         {
             mk_sec("aimbot"),
@@ -385,9 +384,7 @@ local tab_layouts = {
             mk_color("locked color",    "aim_locked_color", {1, 0.3, 0.3, 1}),
         },
     },
-    -- TAB 2: VISUALS (3-column selection layout — handled separately)
     [2] = {},
-    -- TAB 3: MISC (only config + theme + ui)
     [3] = {
         {
             mk_sec("config"),
@@ -406,64 +403,56 @@ local tab_layouts = {
     },
 }
 
--- ─── Visuals tab: 3-column selection layout ───────────────────────────────────
+-- ─── Visuals tab ─────────────────────────────────────────────────────────────
 
--- ESP category: box + chams + skeleton all together
--- Grenade: separate category
 local vis_categories = { "esp", "grenade" }
 
--- column 2: toggles / main settings
+--[[
+    vis_col2 = FILTERS:
+        enabled, max distance / text size / text color
+        — только базовые фильтры что показывать
+
+    vis_col3 = OPTIONS:
+        все визуальные настройки: box, skeleton, chams + цвета/стили
+        — как именно это рисовать
+]]
+
 local vis_col2 = {
+    -- filters (esp): включение и базовые параметры текста/расстояния
     esp = {
-        mk_sec("box esp"),
-        mk_check("enabled",       "v_esp_on",         true),
-        mk_color("box color",     "v_esp_box_color",  {1, 1, 1, 1}),
-        mk_color("text color",    "v_esp_text_color", {1, 1, 1, 1}),
-        mk_slider("text size",    "v_esp_text_size",  14, 8, 32),
-        mk_sec("chams"),
-        mk_check("enabled",       "v_chams_on",       true),
-        mk_combo("style",         "v_chams_style",    {"Filled","Outline","Glow"}, 1),
-        mk_check("gradient",      "v_chams_gradient", false),
-        mk_color("color",         "v_chams_color",    {0, 0.8, 1, 0.7}),
-        mk_color("color 2",       "v_chams_color2",   {0, 0.3, 1, 0.7}),
-        mk_sec("skeleton"),
-        mk_check("enabled",       "v_skel_on",        true),
-        mk_color("color",         "v_skel_color",     {1, 1, 1, 0.9}),
-        mk_slider("thickness",    "v_skel_thickness", 1.5, 0.5, 5.0),
+        mk_check("enabled",      "v_esp_on",        true),
+        mk_slider("text size",   "v_esp_text_size", 14, 8, 32),
+        mk_color("text color",   "v_esp_text_color",{1, 1, 1, 1}),
     },
+    -- filters (grenade): включение и расстояние
     grenade = {
-        mk_sec("grenade esp"),
-        mk_check("enabled",       "v_gren_on",        true),
-        mk_slider("max distance", "v_gren_dist",      1000, 0, 2000),
-        mk_slider("text size",    "v_gren_text_size", 14, 8, 32),
-        mk_color("text color",    "v_gren_color",     {1, 0.6, 0.1, 1}),
+        mk_check("enabled",      "v_gren_on",        true),
+        mk_slider("max distance","v_gren_dist",       1000, 0, 2000),
+        mk_slider("text size",   "v_gren_text_size",  14, 8, 32),
+        mk_color("text color",   "v_gren_color",      {1, 0.6, 0.1, 1}),
     },
 }
 
--- column 3: extra info / notes
 local vis_col3 = {
+    -- options (esp): все визуальные фичи
     esp = {
-        mk_sec("notes"),
-        mk_label("box esp draws a bounding box"),
-        mk_label("around each character model."),
-        mk_label("name label shown above box."),
-        mk_sec("chams info"),
-        mk_label("filled  - solid polygon fill"),
-        mk_label("outline - edge lines only"),
-        mk_label("glow    - layered glow effect"),
-        mk_label("color 2 used when gradient on."),
-        mk_sec("skeleton info"),
-        mk_label("lines connecting bones:"),
-        mk_label("head - torso - root"),
-        mk_label("torso - arms"),
-        mk_label("root  - legs"),
+        mk_check("box",           "v_esp_box_on",     true),
+        mk_color("box color",     "v_esp_box_color",  {1, 1, 1, 1}),
+        mk_check("skeleton",      "v_skel_on",        true),
+        mk_color("skel color",    "v_skel_color",     {1, 1, 1, 0.9}),
+        mk_slider("skel thickness","v_skel_thickness",1.5, 0.5, 5.0),
+        mk_check("chams",         "v_chams_on",       true),
+        mk_combo("chams style",   "v_chams_style",    {"Filled","Outline","Glow"}, 1),
+        mk_check("gradient",      "v_chams_gradient", false),
+        mk_color("chams color",   "v_chams_color",    {0, 0.8, 1, 0.7}),
+        mk_color("chams color 2", "v_chams_color2",   {0, 0.3, 1, 0.7}),
     },
+    -- options (grenade): нет дополнительных визуальных опций
     grenade = {
-        mk_sec("notes"),
         mk_label("scans workspace/grenades"),
         mk_label("for any BasePart objects."),
         mk_label("shows label + distance."),
-        mk_label("dot drawn at grenade position."),
+        mk_label("dot drawn at grenade pos."),
     },
 }
 
@@ -843,13 +832,11 @@ local function draw_hotkeys(mx, my, lmb_clicked, rmb_clicked)
     local ui_show = all_elements["ui_show"]
     if ui_show and not ui_show.val[2] then return end
     if #HOTKEY_DEFS == 0 then return end
-
     local sw,sh  = utility.get_screen_size()
     local row_h  = FONT_S + 10
     local title  = "hotkeys"
     local tw,th  = draw.get_text_size(title, FONT_S)
     local content_w = tw
-
     for _, def in ipairs(HOTKEY_DEFS) do
         local key_elem = all_elements[def.key_id]
         local key_str  = key_elem and key_elem.val or "?"
@@ -858,22 +845,18 @@ local function draw_hotkeys(mx, my, lmb_clicked, rmb_clicked)
         local lw,_     = draw.get_text_size(line, FONT_S)
         if lw+16 > content_w then content_w = lw+16 end
     end
-
     local box_w = content_w + PAD_X*2
     local hdr_h = th + PAD_Y*2
     local box_h = hdr_h + #HOTKEY_DEFS * row_h + PAD_Y
-
     if hk_x == nil then
         hk_x = sw - box_w - 10
         hk_y = sh - box_h - 10
     end
-
     if lmb_clicked and point_in(mx,my,hk_x,hk_y,box_w,box_h) then
         hk_dragging=true; hk_drag_ox=mx-hk_x; hk_drag_oy=my-hk_y
     end
     if not mouse_down then hk_dragging=false end
     if hk_dragging then hk_x=mx-hk_drag_ox; hk_y=my-hk_drag_oy end
-
     draw.rect_filled(hk_x,hk_y,box_w,box_h,C.hk_bg,3)
     draw.rect(hk_x,hk_y,box_w,box_h,C.hk_border,3,1.0)
     draw.rect_filled(hk_x,hk_y,box_w,hdr_h,C.hk_header,0)
@@ -881,7 +864,6 @@ local function draw_hotkeys(mx, my, lmb_clicked, rmb_clicked)
     local tlw,tlh = draw.get_text_size(title, FONT_S)
     dtext(hk_x+box_w/2-tlw/2, hk_y+PAD_Y, title, C.hk_title, FONT_S)
     draw.rect_filled(hk_x,hk_y+hdr_h,box_w,1,C.hk_border)
-
     for i, def in ipairs(HOTKEY_DEFS) do
         local ry = hk_y + hdr_h + (i-1)*row_h + PAD_Y/2 + 2
         local active   = hk_is_active(def, i)
@@ -941,24 +923,16 @@ local function reset_sticky_state()
 end
 
 local function gui_get(id)
-    local e = all_elements[id]
-    if not e then return nil end
-    return e.val
+    local e = all_elements[id]; if not e then return nil end; return e.val
 end
 local function gui_get_color(id)
-    local e = all_elements[id]
-    if not e then return {1,1,1,1} end
-    return e.val
+    local e = all_elements[id]; if not e then return {1,1,1,1} end; return e.val
 end
 local function gui_get_combo(id)
-    local e = all_elements[id]
-    if not e then return 0 end
-    return (e.val or 1) - 1
+    local e = all_elements[id]; if not e then return 0 end; return (e.val or 1)-1
 end
 local function gui_get_key(id)
-    local e = all_elements[id]
-    if not e then return nil end
-    return str_to_vk(e.val)
+    local e = all_elements[id]; if not e then return nil end; return str_to_vk(e.val)
 end
 
 local function part_to_screen(part)
@@ -1082,18 +1056,13 @@ local function run_aimbot(characters_folder)
     local fov_on     = gui_get("aim_drawfov")
     local fov_color  = gui_get_color("aim_fov_color")
     local fov_radius = gui_get("aim_fov") or 120
+    local cx, cy     = input.get_screen_center()
 
-    local cx, cy = input.get_screen_center()
-
-    -- Always draw FOV circle if enabled (even when key not held)
     if aim_on and fov_on then
         draw.circle(cx, cy, fov_radius, fov_color, 64, 1.0)
     end
 
-    if not aim_on then
-        reset_sticky_state()
-        return
-    end
+    if not aim_on then reset_sticky_state(); return end
 
     local aim_key    = gui_get_key("aim_key_lbl")
     if not aim_key then return end
@@ -1101,7 +1070,7 @@ local function run_aimbot(characters_folder)
     local sticky     = gui_get("aim_sticky")
     local sticky_fov = gui_get("aim_sticky_fov") or 160
     local smooth     = gui_get("aim_smooth") or 5
-    local bone_idx   = gui_get_combo("aim_bone")  -- 0-based
+    local bone_idx   = gui_get_combo("aim_bone")
     local bone_name  = BONE_NAMES_LIST[bone_idx + 1] or "head"
     local locked_col = gui_get_color("aim_locked_color")
 
@@ -1127,7 +1096,6 @@ local function run_aimbot(characters_folder)
         return
     end
 
-    -- Sticky logic
     if not key_down and was_key_down then reset_sticky_state() end
     was_key_down = key_down
     if not key_down then return end
@@ -1165,7 +1133,6 @@ local function run_aimbot(characters_folder)
     local tsx, tsy = get_bone_screen(locked_model, bone_name)
     if not tsx then return end
 
-    -- Crosshair on locked target
     local r = 5
     draw.line(tsx-r, tsy,   tsx+r, tsy,   locked_col, 1.5)
     draw.line(tsx,   tsy-r, tsx,   tsy+r, locked_col, 1.5)
@@ -1185,11 +1152,9 @@ local function run_grenade_esp(cam_pos)
     if not ws or not utility.is_valid(ws) then return end
     local grenades_folder = ws:find_first_child("grenades")
     if not grenades_folder or not utility.is_valid(grenades_folder) then return end
-
     local max_dist  = gui_get("v_gren_dist") or 1000
     local text_size = gui_get("v_gren_text_size") or 14
     local color     = gui_get_color("v_gren_color")
-
     for _, gren in ipairs(grenades_folder:get_children()) do
         if not utility.is_valid(gren) then goto gc end
         local root = nil
@@ -1207,18 +1172,15 @@ local function run_grenade_esp(cam_pos)
             if found and utility.is_valid(found) then root = found end
         end
         if not root then goto gc end
-        local pos = root.Position
-        if not pos then goto gc end
-        local dx   = pos.x - cam_pos.x
-        local dy   = pos.y - cam_pos.y
-        local dz   = pos.z - cam_pos.z
-        local dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+        local pos = root.Position; if not pos then goto gc end
+        local dx=pos.x-cam_pos.x; local dy=pos.y-cam_pos.y; local dz=pos.z-cam_pos.z
+        local dist = math.sqrt(dx*dx+dy*dy+dz*dz)
         if max_dist > 0 and dist > max_dist then goto gc end
         local sx, sy, on_screen = draw.world_to_screen(pos.x, pos.y, pos.z)
         if not on_screen then goto gc end
-        local label = "Grenade [" .. math.floor(dist) .. "m]"
+        local label = "Grenade ["..math.floor(dist).."m]"
         local tw, th = draw.get_text_size(label, text_size)
-        draw.text(sx - tw/2, sy - th/2, label, color, text_size)
+        draw.text(sx-tw/2, sy-th/2, label, color, text_size)
         draw.circle_filled(sx, sy, 3, color)
         ::gc::
     end
@@ -1234,7 +1196,6 @@ function on_frame()
     local lmb_clicked = mouse_down and not mouse_was_down
     local rmb_clicked = rmb_down   and not rmb_was_down
 
-    -- Menu bind toggle
     local cfg_key_elem = all_elements["cfg_menu_key"]
     if cfg_key_elem then
         local parsed = str_to_vk(cfg_key_elem.val)
@@ -1249,7 +1210,6 @@ function on_frame()
     end
     menu_bind_was = bind_now
 
-    -- Keybind listen
     if kb_listening_id then
         for vk=0x01,0xFF do
             if vk~=0x01 and vk~=0x02 and input.is_key_down(vk) then
@@ -1261,8 +1221,7 @@ function on_frame()
                         if p then menu_bind_vk = p end
                     end
                 end
-                kb_listening_id = nil
-                break
+                kb_listening_id = nil; break
             end
         end
     end
@@ -1277,21 +1236,19 @@ function on_frame()
     local ws = game.workspace
     if ws then
         local cam_pos = camera.get_position()
-
-        -- Grenade ESP
         run_grenade_esp(cam_pos)
 
         local characters_folder = ws:find_first_child("characters")
         if characters_folder then
-
-            -- Aimbot (also draws FOV circle)
             run_aimbot(characters_folder)
 
             local esp_on   = gui_get("v_esp_on")
+            -- box toggle живёт в options колонке теперь
+            local box_on   = gui_get("v_esp_box_on")
             local chams_on = gui_get("v_chams_on")
             local skel_on  = gui_get("v_skel_on")
 
-            if esp_on or chams_on or skel_on then
+            if esp_on and (box_on or chams_on or skel_on) then
                 local box_color      = gui_get_color("v_esp_box_color")
                 local text_color     = gui_get_color("v_esp_text_color")
                 local text_size      = gui_get("v_esp_text_size") or 14
@@ -1321,7 +1278,7 @@ function on_frame()
                         if p then table.insert(all_parts, p) end
                     end
 
-                    -- Chams (drawn first — behind box/skeleton)
+                    -- Chams first (behind everything)
                     if chams_on then
                         draw_manual_chams(all_parts, chams_color, chams_color2, chams_style)
                     end
@@ -1337,8 +1294,8 @@ function on_frame()
                         end
                     end
 
-                    -- Box ESP + name label
-                    if esp_on then
+                    -- Box ESP + name
+                    if box_on then
                         local bb = collect_aabb(all_parts)
                         if bb and bb.w >= 2 and bb.h >= 2 then
                             local is_locked = locked_model ~= nil
@@ -1376,7 +1333,6 @@ function on_frame()
     if lmb_clicked and not point_in(mx,my,WIN_X,WIN_Y,WIN_W,WIN_H) then
         cp_open=false; cp_elem_id=nil; dd_open_id=nil; kb_listening_id=nil
     end
-
     if lmb_clicked and point_in(mx,my,WIN_X,WIN_Y,WIN_W,HDR_H) then
         dragging=true; drag_ox=mx-WIN_X; drag_oy=my-WIN_Y
     end
@@ -1421,13 +1377,12 @@ function on_frame()
 
     -- Content
     if active_tab == 2 then
-        -- VISUALS: 3-column selection layout
         local col_w = math.floor(WIN_W/3)
         local x1 = WIN_X
         local x2 = WIN_X + col_w
         local x3 = WIN_X + col_w*2
 
-        -- Column 1: category selector
+        -- Column 1: selection
         dpanel(x1, content_y, col_w, content_h, C.panel_dark, nil, 0)
         draw.rect_filled(x1+col_w-1, content_y, 1, content_h, C.border_l)
         local stw,sth = draw.get_text_size("selection", FONT_S)
@@ -1453,11 +1408,11 @@ function on_frame()
             end
         end
 
-        -- Column 2: settings
+        -- Column 2: filters
         local cur = vis_categories[active_sel]
         dpanel(x2, content_y, col_w, content_h, C.panel, nil, 0)
         draw.rect_filled(x2+col_w-1, content_y, 1, content_h, C.border_l)
-        local c2h = "settings  ("..cur..")"
+        local c2h = "filters  ("..cur..")"
         local c2hw,c2hh = draw.get_text_size(c2h, FONT_S)
         draw.rect_filled(x2, content_y, col_w, SEC_H+4, C.section_hdr, 0)
         draw.rect_filled(x2, content_y, 2, SEC_H+4, C.accent)
@@ -1465,9 +1420,9 @@ function on_frame()
         draw.rect_filled(x2, content_y+SEC_H+4, col_w, 1, C.separator)
         draw_column(vis_col2[cur] or {}, x2, content_y+SEC_H+8, col_w, mx, my, lmb_clicked)
 
-        -- Column 3: info
+        -- Column 3: options
         dpanel(x3, content_y, col_w, content_h, C.panel, nil, 0)
-        local c3h = "info  ("..cur..")"
+        local c3h = "options  ("..cur..")"
         local c3hw,c3hh = draw.get_text_size(c3h, FONT_S)
         draw.rect_filled(x3, content_y, col_w, SEC_H+4, C.section_hdr, 0)
         draw.rect_filled(x3, content_y, 2, SEC_H+4, C.accent)
@@ -1476,7 +1431,6 @@ function on_frame()
         draw_column(vis_col3[cur] or {}, x3, content_y+SEC_H+8, col_w, mx, my, lmb_clicked)
 
     else
-        -- AIMBOT / MISC
         local layout = tab_layouts[active_tab]
         local ncols  = #layout
         if ncols > 0 then
@@ -1496,7 +1450,6 @@ function on_frame()
 
     draw.rect(WIN_X, WIN_Y, WIN_W, WIN_H, C.border_l, 2, 1.0)
 
-    -- Deferred overlays
     for _, cp in ipairs(pending_colorpickers) do
         draw_colorpicker(cp.elem, cp.px, cp.py, mx, my, lmb_clicked)
     end
