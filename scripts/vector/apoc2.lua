@@ -266,7 +266,6 @@ local drag_slider_id = nil
 local menu_bind_vk   = 0x2D
 local menu_bind_was  = false
 
--- Tabs: aimbot | visuals | misc
 local tabs = {"aimbot", "visuals", "misc"}
 
 local cp_open      = false
@@ -336,8 +335,6 @@ local function rgb_to_hsv(r,g,b)
     return h,s,v
 end
 
--- ─── Element constructors ────────────────────────────────────────────────────
-
 local function mk_check(label, id, val)
     return {type="check", label=label, id=id, val=val}
 end
@@ -369,7 +366,7 @@ local function mk_multicombo(label, id, items, defaults)
     return {type="multicombo", label=label, id=id, items=items, val=v}
 end
 
--- ─── Tab 1: Aimbot ───────────────────────────────────────────────────────────
+-- ─── Tab layouts ─────────────────────────────────────────────────────────────
 
 local tab_layouts = {
     [1] = {
@@ -389,9 +386,7 @@ local tab_layouts = {
             mk_slider("projectile speed","aim_proj_speed",   1000, 100, 5000),
         },
     },
-    -- Tab 2: Visuals — 3-column selection layout, handled separately
     [2] = {},
-    -- Tab 3: Misc — config + theme + ui only
     [3] = {
         {
             mk_sec("config"),
@@ -406,67 +401,66 @@ local tab_layouts = {
     },
 }
 
--- ─── Visuals tab: selection categories ───────────────────────────────────────
+-- ─── Visuals: selection categories ───────────────────────────────────────────
 
--- 4 categories in selector column
 local vis_categories = { "zombies", "vehicles", "corpses" }
 
--- Column 2: main settings per category
+--[[
+    vis_col2 = FILTERS column:
+        enabled toggle, max distance slider, font size slider, text color
+        (per-category basics — what to scan / show at all)
+
+    vis_col3 = OPTIONS column:
+        all visual toggles: box, skeleton, healthbar, chams + their colors/styles
+        (how it looks — mirrors the screenshot layout exactly)
+]]
+
 local vis_col2 = {
     zombies = {
-        mk_sec("label & distance"),
-        mk_check("enabled",        "zesp_on",          true),
-        mk_slider("max distance",  "zesp_max_dist",    1000, 0, 5000),
-        mk_slider("font size",     "zesp_font_size",   14, 10, 30),
-        mk_color("text color",     "zesp_color",       {1, 0.2, 0.2, 1}),
-        mk_sec("box"),
-        mk_check("enabled",        "zesp_box",         false),
-        mk_combo("style",          "zesp_box_style",   {"Normal","Corner"}, 1),
-        mk_color("box color",      "zesp_box_color",   {1, 0.2, 0.2, 1}),
-        mk_sec("health bar"),
-        mk_check("enabled",        "zesp_healthbar",   false),
+        mk_check("enabled",       "zesp_on",        true),
+        mk_slider("max distance", "zesp_max_dist",  1000, 0, 5000),
+        mk_slider("font size",    "zesp_font_size", 14, 10, 30),
+        mk_color("text color",    "zesp_color",     {1, 0.2, 0.2, 1}),
     },
     vehicles = {
-        mk_sec("vehicle esp"),
-        mk_check("enabled",        "vesp_on",          true),
-        mk_slider("max distance",  "vesp_max_dist",    1000, 0, 5000),
-        mk_slider("font size",     "vesp_font_size",   14, 10, 30),
-        mk_color("text color",     "vesp_color",       {1, 1, 0, 1}),
+        mk_check("enabled",       "vesp_on",        true),
+        mk_slider("max distance", "vesp_max_dist",  1000, 0, 5000),
+        mk_slider("font size",    "vesp_font_size", 14, 10, 30),
+        mk_color("text color",    "vesp_color",     {1, 1, 0, 1}),
     },
     corpses = {
-        mk_sec("corpse esp"),
-        mk_check("enabled",        "cesp_on",          true),
-        mk_slider("max distance",  "cesp_max_dist",    1000, 0, 5000),
-        mk_slider("font size",     "cesp_font_size",   14, 10, 30),
-        mk_color("text color",     "cesp_color",       {0.8, 0.8, 0.8, 1}),
+        mk_check("enabled",       "cesp_on",        true),
+        mk_slider("max distance", "cesp_max_dist",  1000, 0, 5000),
+        mk_slider("font size",    "cesp_font_size", 14, 10, 30),
+        mk_color("text color",    "cesp_color",     {0.8, 0.8, 0.8, 1}),
     },
 }
 
--- Column 3: extra options per category
 local vis_col3 = {
     zombies = {
-        mk_sec("skeleton"),
-        mk_check("enabled",        "zesp_skel",        false),
-        mk_color("color",          "zesp_skel_color",  {1, 1, 1, 0.8}),
-        mk_sec("chams"),
-        mk_check("enabled",        "zesp_chams",       false),
-        mk_combo("style",          "zesp_chams_style", {"Filled","Outline","Glow"}, 1),
-        mk_color("color",          "zesp_chams_color", {1, 0.2, 0.2, 0.6}),
-        mk_color("color 2",        "zesp_chams_color2",{0.8, 0, 0, 0.6}),
+        mk_check("box",           "zesp_box",         false),
+        mk_combo("box style",     "zesp_box_style",   {"Normal","Corner"}, 1),
+        mk_color("box color",     "zesp_box_color",   {1, 0.2, 0.2, 1}),
+        mk_check("health bar",    "zesp_healthbar",   false),
+        mk_check("skeleton",      "zesp_skel",        false),
+        mk_color("skeleton color","zesp_skel_color",  {1, 1, 1, 0.8}),
+        mk_check("chams",         "zesp_chams",       false),
+        mk_combo("chams style",   "zesp_chams_style", {"Filled","Outline","Glow"}, 1),
+        mk_color("chams color",   "zesp_chams_color", {1, 0.2, 0.2, 0.6}),
+        mk_color("chams color 2", "zesp_chams_color2",{0.8, 0, 0, 0.6}),
     },
     vehicles = {
-        mk_sec("info"),
-        mk_label("scans workspace/Vehicles"),
-        mk_label("finds HumanoidRootPart"),
-        mk_label("or first BasePart."),
-        mk_label("shows name + distance."),
+        mk_label("vehicles show name + distance."),
+        mk_label("scans workspace/Vehicles."),
+        mk_label("uses HumanoidRootPart or"),
+        mk_label("first BasePart as origin."),
     },
     corpses = {
-        mk_sec("info"),
-        mk_label("scans workspace/Corpses"),
-        mk_label("finds HumanoidRootPart,"),
-        mk_label("UpperTorso, or first BasePart."),
-        mk_label("shows label + distance."),
+        mk_label("corpses show label + distance."),
+        mk_label("scans workspace/Corpses."),
+        mk_label("tries HumanoidRootPart,"),
+        mk_label("then UpperTorso,"),
+        mk_label("then first BasePart."),
     },
 }
 
@@ -692,14 +686,14 @@ local function draw_context_menu(mx, my, lmb_clicked)
             is_current and C.ctx_active or C.ctx_text, FONT_S)
         if lmb_clicked and hov then
             if def then
-                def.mode = i; def.toggle_state = false
-                hk_prev_state[ctx_hk_idx] = false
+                def.mode=i; def.toggle_state=false
+                hk_prev_state[ctx_hk_idx]=false
             end
-            ctx_open = false
+            ctx_open=false
         end
     end
     if lmb_clicked and not point_in(mx,my,ctx_x,ctx_y,ctx_w,ctx_h) then
-        ctx_open = false
+        ctx_open=false
     end
 end
 
@@ -798,8 +792,8 @@ local function draw_column(elems, col_x, start_y, col_w, mx, my, clicked)
             local pw,ph=draw.get_text_size(preview,FONT_S)
             dtext(box_x+4,box_y+9-ph/2,preview,C.text_active,FONT_S)
             local arr=is_open and "^" or "v"
-            local aw,ah=draw.get_text_size(arr,FONT_S)
-            dtext(box_x+box_w-aw-4,box_y+9-ah/2,arr,C.text_dim,FONT_S)
+            local aw2,ah=draw.get_text_size(arr,FONT_S)
+            dtext(box_x+box_w-aw2-4,box_y+9-ah/2,arr,C.text_dim,FONT_S)
             if clicked and point_in(mx,my,box_x,box_y,box_w,18) then
                 dd_open_id=is_open and nil or e.id; cp_open=false
             end
@@ -891,7 +885,7 @@ local function draw_hotkeys(mx, my, lmb_clicked, rmb_clicked)
         dtext(hk_x+PAD_X+dot_r*2+5, ry, def.label.." - "..key_str, text_col, FONT_S)
         local mode_str = "["..CTX_MODES[def.mode].."]"
         local mw,mh    = draw.get_text_size(mode_str, FONT_S)
-        local mode_col = {C.text_dim[1]*1.4, C.text_dim[2]*1.4, C.text_dim[3]*1.4, 1.0}
+        local mode_col = {C.text_dim[1]*1.4,C.text_dim[2]*1.4,C.text_dim[3]*1.4,1.0}
         dtext(hk_x+box_w-PAD_X-mw, ry+FONT_S/2-mh/2+1, mode_str, mode_col, FONT_S)
         if rmb_clicked and point_in(mx,my,hk_x,ry,box_w,row_h) then
             ctx_open=true; ctx_hk_idx=i; ctx_x=mx; ctx_y=my
@@ -903,81 +897,59 @@ local function draw_hotkeys(mx, my, lmb_clicked, rmb_clicked)
     end
 end
 
--- ─── GUI accessor helpers ─────────────────────────────────────────────────────
+-- ─── GUI accessors ────────────────────────────────────────────────────────────
 
 local function gui_get(id)
-    local e = all_elements[id]
-    if not e then return nil end
-    return e.val
+    local e = all_elements[id]; if not e then return nil end; return e.val
 end
 local function gui_get_color(id)
-    local e = all_elements[id]
-    if not e then return {1,1,1,1} end
-    return e.val
+    local e = all_elements[id]; if not e then return {1,1,1,1} end; return e.val
 end
 local function gui_get_combo(id)
-    local e = all_elements[id]
-    if not e then return 0 end
-    return (e.val or 1) - 1
+    local e = all_elements[id]; if not e then return 0 end; return (e.val or 1)-1
 end
 local function gui_get_key(id)
-    local e = all_elements[id]
-    if not e then return nil end
-    return str_to_vk(e.val)
+    local e = all_elements[id]; if not e then return nil end; return str_to_vk(e.val)
 end
 
 -- ─── Skeleton connections ─────────────────────────────────────────────────────
 
 local connections_r15 = {
-    {"Head",         "UpperTorso"},
-    {"UpperTorso",   "LowerTorso"},
-    {"UpperTorso",   "LeftUpperArm"},
-    {"LeftUpperArm", "LeftLowerArm"},
-    {"LeftLowerArm", "LeftHand"},
-    {"UpperTorso",   "RightUpperArm"},
-    {"RightUpperArm","RightLowerArm"},
-    {"RightLowerArm","RightHand"},
-    {"LowerTorso",   "LeftUpperLeg"},
-    {"LeftUpperLeg", "LeftLowerLeg"},
-    {"LeftLowerLeg", "LeftFoot"},
-    {"LowerTorso",   "RightUpperLeg"},
-    {"RightUpperLeg","RightLowerLeg"},
-    {"RightLowerLeg","RightFoot"},
+    {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
+    {"UpperTorso","LeftUpperArm"},{"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},
+    {"UpperTorso","RightUpperArm"},{"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"},
+    {"LowerTorso","LeftUpperLeg"},{"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},
+    {"LowerTorso","RightUpperLeg"},{"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"},
 }
 local connections_r6 = {
-    {"Head",    "Torso"},
-    {"Torso",   "Left Arm"},
-    {"Torso",   "Right Arm"},
-    {"Torso",   "Left Leg"},
-    {"Torso",   "Right Leg"},
+    {"Head","Torso"},{"Torso","Left Arm"},{"Torso","Right Arm"},
+    {"Torso","Left Leg"},{"Torso","Right Leg"},
 }
 
 -- ─── Sticky aim state ─────────────────────────────────────────────────────────
 
 local sticky_locked_player = nil
 local sticky_was_key_down  = false
-
 local function sticky_reset()
     sticky_locked_player = nil
     sticky_was_key_down  = false
 end
 
--- ─── Prediction helper ────────────────────────────────────────────────────────
+-- ─── Prediction ──────────────────────────────────────────────────────────────
 
 local proj_gravity = -19.62
 local function calculate_trajectory(origin, proj_speed, target_pos, target_vel)
     local time_to_hit = (origin - target_pos).magnitude / proj_speed
-    local drop = Vector3.new(0, math.abs(proj_gravity) * (time_to_hit^2), 0)
+    local drop = Vector3.new(0, math.abs(proj_gravity)*(time_to_hit^2), 0)
     return target_pos + (target_vel * time_to_hit) + drop
 end
 
--- ─── Zombie helpers ──────────────────────────────────────────────────────────
+-- ─── Zombie draw helpers ─────────────────────────────────────────────────────
 
 local function get_zombie_bone_screen(zombie, bone_name)
     local part = zombie:find_first_child(bone_name)
     if not part or not utility.is_valid(part) then return nil end
-    local pos = part.Position
-    if not pos then return nil end
+    local pos = part.Position; if not pos then return nil end
     local sx, sy, on_screen = utility.world_to_screen(pos.x, pos.y, pos.z)
     if not on_screen then return nil end
     return {sx, sy}
@@ -989,21 +961,17 @@ local function draw_zombie_skeleton(zombie, skel_color)
     for _, conn in ipairs(conns) do
         local a = get_zombie_bone_screen(zombie, conn[1])
         local b = get_zombie_bone_screen(zombie, conn[2])
-        if a and b then
-            draw.line(a[1], a[2], b[1], b[2], skel_color)
-        end
+        if a and b then draw.line(a[1],a[2],b[1],b[2],skel_color) end
     end
 end
 
 local function draw_zombie_chams(zombie, color, color2, style)
-    local parts = zombie:get_children()
     local screen_pts = {}
-    for _, part in ipairs(parts) do
+    for _, part in ipairs(zombie:get_children()) do
         if not utility.is_valid(part) then goto pc end
         local ok, is_bp = pcall(function() return part:is_a("BasePart") end)
         if not (ok and is_bp) then goto pc end
-        local pos = part.Position
-        if not pos then goto pc end
+        local pos = part.Position; if not pos then goto pc end
         local sx, sy, on_screen = utility.world_to_screen(pos.x, pos.y, pos.z)
         if on_screen then table.insert(screen_pts, {sx, sy}) end
         ::pc::
@@ -1013,7 +981,7 @@ local function draw_zombie_chams(zombie, color, color2, style)
     if not hull or #hull < 3 then return end
     if style == 0 then
         local fill = color2 or color
-        draw.poly_filled(hull, {fill[1], fill[2], fill[3], (color[4] or 1)*0.5})
+        draw.poly_filled(hull, {fill[1],fill[2],fill[3],(color[4] or 1)*0.5})
         draw.poly_closed(hull, color, 1.5)
     elseif style == 1 then
         draw.poly_closed(hull, color, 1.5)
@@ -1027,36 +995,30 @@ local function draw_zombie_chams(zombie, color, color2, style)
 end
 
 local function zombie_collect_box(zombie)
-    local min_x, min_y =  math.huge,  math.huge
-    local max_x, max_y = -math.huge, -math.huge
+    local min_x,min_y = math.huge,math.huge
+    local max_x,max_y = -math.huge,-math.huge
     local any = false
     for _, part in ipairs(zombie:get_children()) do
         if not utility.is_valid(part) then goto bp end
         local ok, is_bp = pcall(function() return part:is_a("BasePart") end)
         if not (ok and is_bp) then goto bp end
-        local pos = part.Position
-        if not pos then goto bp end
+        local pos = part.Position; if not pos then goto bp end
         local px, py, pon = utility.world_to_screen(pos.x, pos.y, pos.z)
         if pon then
-            any = true
-            if px < min_x then min_x = px end
-            if py < min_y then min_y = py end
-            if px > max_x then max_x = px end
-            if py > max_y then max_y = py end
+            any=true
+            if px<min_x then min_x=px end; if py<min_y then min_y=py end
+            if px>max_x then max_x=px end; if py>max_y then max_y=py end
         end
         ::bp::
     end
-    if not any or max_x <= min_x or max_y <= min_y then return nil end
-    return { x=min_x, y=min_y, w=max_x-min_x, h=max_y-min_y }
+    if not any or max_x<=min_x or max_y<=min_y then return nil end
+    return {x=min_x,y=min_y,w=max_x-min_x,h=max_y-min_y}
 end
 
 -- ─── Game feature runners ────────────────────────────────────────────────────
 
 local function run_aimbot(cam_pos)
-    if not gui_get("aim_on") then
-        sticky_reset()
-        return
-    end
+    if not gui_get("aim_on") then sticky_reset(); return end
 
     local aim_fov    = gui_get("aim_fov")    or 100
     local aim_smooth = gui_get("aim_smooth") or 0.15
@@ -1068,42 +1030,39 @@ local function run_aimbot(cam_pos)
     local aim_key    = gui_get_key("aim_key_lbl")
     local cx, cy     = input.get_screen_center()
 
-    -- FOV circle
     if gui_get("aim_drawfov") then
-        draw.circle(cx, cy, aim_fov, {1, 1, 1, 0.3}, 64, 1.0)
+        draw.circle(cx, cy, aim_fov, {1,1,1,0.3}, 64, 1.0)
     end
 
     if not aim_key then return end
     local key_down = input.is_key_down(aim_key)
 
     if aim_sticky then
-        -- Release key → reset
         if not key_down and sticky_was_key_down then sticky_reset() end
         sticky_was_key_down = key_down
 
         if key_down then
-            -- Validate locked target
             if sticky_locked_player then
                 local still_ok = sticky_locked_player.is_alive
                 if still_ok then
-                    local lsx, lsy, lv = sticky_locked_player:get_bone_screen("Head")
+                    local lsx,lsy,lv = sticky_locked_player:get_bone_screen("Head")
                     if not lv then
                         still_ok = false
                     else
-                        local d = math.sqrt((lsx-cx)^2+(lsy-cy)^2)
-                        if d > sticky_fov then still_ok = false end
+                        if math.sqrt((lsx-cx)^2+(lsy-cy)^2) > sticky_fov then
+                            still_ok = false
+                        end
                     end
                 end
                 if not still_ok then sticky_locked_player = nil end
             end
 
-            -- Find new target
             if not sticky_locked_player then
                 local best_dist = aim_fov
                 local best_p    = nil
                 for _, p in ipairs(entity.get_players()) do
                     if p.is_local or not p.is_alive then goto sc end
-                    local sx, sy, vis = p:get_bone_screen("Head")
+                    local sx,sy,vis = p:get_bone_screen("Head")
                     if not vis then goto sc end
                     local d = math.sqrt((sx-cx)^2+(sy-cy)^2)
                     if d < best_dist then best_dist=d; best_p=p end
@@ -1112,40 +1071,40 @@ local function run_aimbot(cam_pos)
                 sticky_locked_player = best_p
             end
 
-            -- Move mouse
             if sticky_locked_player then
-                local tsx, tsy, tv = sticky_locked_player:get_bone_screen("Head")
+                local tsx,tsy,tv = sticky_locked_player:get_bone_screen("Head")
                 if tv then
                     local r = 6
-                    draw.line(tsx-r, tsy,   tsx+r, tsy,   locked_col, 1.5)
-                    draw.line(tsx,   tsy-r, tsx,   tsy+r, locked_col, 1.5)
-                    draw.circle(tsx, tsy, r+3, locked_col, 16, 1.0)
-                    local dx = (tsx-cx)*aim_smooth
-                    local dy = (tsy-cy)*aim_smooth
-                    input.move_mouse(math.floor(dx), math.floor(dy))
+                    draw.line(tsx-r,tsy,tsx+r,tsy,locked_col,1.5)
+                    draw.line(tsx,tsy-r,tsx,tsy+r,locked_col,1.5)
+                    draw.circle(tsx,tsy,r+3,locked_col,16,1.0)
+                    input.move_mouse(
+                        math.floor((tsx-cx)*aim_smooth),
+                        math.floor((tsy-cy)*aim_smooth)
+                    )
                 end
             end
         end
 
     elseif key_down then
         sticky_reset()
-        local best_x, best_y = nil, nil
-        local closest_dist   = aim_fov
+        local best_x,best_y = nil,nil
+        local closest_dist  = aim_fov
 
         for _, p in ipairs(entity.get_players()) do
             if p.is_local or not p.is_alive then goto ac end
             local char = p.character
             if not utility.is_valid(char) then goto ac end
-            local sx, sy, vis = p:get_bone_screen("Head")
+            local sx,sy,vis = p:get_bone_screen("Head")
             if not vis then goto ac end
 
             if aim_pred then
                 local head_pos   = p.head_position
                 local target_vel = p.velocity
                 if head_pos and target_vel then
-                    local pred = calculate_trajectory(cam_pos, proj_speed, head_pos, target_vel)
-                    local psx, psy, pon = utility.world_to_screen(pred.x, pred.y, pred.z)
-                    if pon then sx, sy = psx, psy else goto ac end
+                    local pred = calculate_trajectory(cam_pos,proj_speed,head_pos,target_vel)
+                    local psx,psy,pon = utility.world_to_screen(pred.x,pred.y,pred.z)
+                    if pon then sx,sy=psx,psy else goto ac end
                 end
             end
 
@@ -1173,28 +1132,23 @@ local function run_vehicle_esp(cam_pos)
     if not ws or not utility.is_valid(ws) then return end
     local folder = ws:find_first_child("Vehicles")
     if not folder or not utility.is_valid(folder) then return end
-
     local color     = gui_get_color("vesp_color")
     local max_dist  = gui_get("vesp_max_dist") or 1000
     local font_size = gui_get("vesp_font_size") or 14
-
     for _, vehicle in ipairs(folder:get_children()) do
         if not utility.is_valid(vehicle) then goto vc end
         local root = vehicle:find_first_child("HumanoidRootPart")
         if not root then root = vehicle:find_first_child_of_class("BasePart") end
         if not root then goto vc end
-        local pos = root.Position
-        if not pos then goto vc end
-        local dx   = pos.x - cam_pos.x
-        local dy   = pos.y - cam_pos.y
-        local dz   = pos.z - cam_pos.z
+        local pos = root.Position; if not pos then goto vc end
+        local dx=pos.x-cam_pos.x; local dy=pos.y-cam_pos.y; local dz=pos.z-cam_pos.z
         local dist = math.sqrt(dx*dx+dy*dy+dz*dz)
         if dist > max_dist then goto vc end
-        local sx, sy, on_screen = utility.world_to_screen(pos.x, pos.y, pos.z)
+        local sx,sy,on_screen = utility.world_to_screen(pos.x,pos.y,pos.z)
         if not on_screen then goto vc end
         local label = vehicle.Name.." ["..math.floor(dist).."m]"
-        local tw, th = draw.get_text_size(label, font_size)
-        draw.text(sx-tw/2, sy-th/2, label, color, font_size)
+        local tw,th = draw.get_text_size(label,font_size)
+        draw.text(sx-tw/2,sy-th/2,label,color,font_size)
         ::vc::
     end
 end
@@ -1207,16 +1161,16 @@ local function run_zombie_esp(cam_pos)
     if not folder or not utility.is_valid(folder) then return end
 
     local color        = gui_get_color("zesp_color")
-    local max_dist     = gui_get("zesp_max_dist") or 1000
+    local max_dist     = gui_get("zesp_max_dist")  or 1000
     local font_size    = gui_get("zesp_font_size") or 14
     local do_box       = gui_get("zesp_box")
-    local box_style    = gui_get_combo("zesp_box_style")  -- 0-based
+    local box_style    = gui_get_combo("zesp_box_style")
     local box_color    = gui_get_color("zesp_box_color")
     local do_healthbar = gui_get("zesp_healthbar")
     local do_skel      = gui_get("zesp_skel")
     local skel_color   = gui_get_color("zesp_skel_color")
     local do_chams     = gui_get("zesp_chams")
-    local chams_style  = gui_get_combo("zesp_chams_style") -- 0-based
+    local chams_style  = gui_get_combo("zesp_chams_style")
     local chams_color  = gui_get_color("zesp_chams_color")
     local chams_color2 = gui_get_color("zesp_chams_color2")
 
@@ -1225,34 +1179,27 @@ local function run_zombie_esp(cam_pos)
         local root = zombie:find_first_child("HumanoidRootPart")
         if not root then root = zombie:find_first_child_of_class("BasePart") end
         if not root then goto zc end
-        local pos = root.Position
-        if not pos then goto zc end
-        local dx   = pos.x - cam_pos.x
-        local dy   = pos.y - cam_pos.y
-        local dz   = pos.z - cam_pos.z
+        local pos = root.Position; if not pos then goto zc end
+        local dx=pos.x-cam_pos.x; local dy=pos.y-cam_pos.y; local dz=pos.z-cam_pos.z
         local dist = math.sqrt(dx*dx+dy*dy+dz*dz)
         if dist > max_dist then goto zc end
-        local sx, sy, on_screen = utility.world_to_screen(pos.x, pos.y, pos.z)
+        local sx,sy,on_screen = utility.world_to_screen(pos.x,pos.y,pos.z)
         if not on_screen then goto zc end
 
-        -- Health
-        local hp, max_hp = 100, 100
+        local hp,max_hp = 100,100
         local hum = zombie:find_first_child_of_class("Humanoid")
         if hum and utility.is_valid(hum) then
             hp     = hum.Health    or 100
             max_hp = hum.MaxHealth or 100
         end
 
-        -- Chams
+        -- draw order: chams → box → healthbar → skeleton → label
         if do_chams then
             draw_zombie_chams(zombie, chams_color, chams_color2, chams_style)
         end
 
-        -- Box + healthbar
         local b = nil
-        if do_box or do_healthbar then
-            b = zombie_collect_box(zombie)
-        end
+        if do_box or do_healthbar then b = zombie_collect_box(zombie) end
 
         if do_box and b then
             draw.box(b.x, b.y, b.w, b.h, box_color, 0, box_style)
@@ -1262,15 +1209,13 @@ local function run_zombie_esp(cam_pos)
             draw.health_bar(b.x-5, b.y, b.h, hp, max_hp)
         end
 
-        -- Skeleton
         if do_skel then
             draw_zombie_skeleton(zombie, skel_color)
         end
 
-        -- Label
         local hp_str = " HP:"..math.floor(hp).."/"..math.floor(max_hp)
         local label  = zombie.Name..hp_str.." ["..math.floor(dist).."m]"
-        local tw, th = draw.get_text_size(label, font_size)
+        local tw,th  = draw.get_text_size(label,font_size)
         local text_y = sy - th/2
         if b then text_y = b.y - th - 2 end
         draw.text(sx-tw/2, text_y, label, color, font_size)
@@ -1285,29 +1230,24 @@ local function run_corpse_esp(cam_pos)
     if not ws or not utility.is_valid(ws) then return end
     local folder = ws:find_first_child("Corpses")
     if not folder or not utility.is_valid(folder) then return end
-
     local color     = gui_get_color("cesp_color")
-    local max_dist  = gui_get("cesp_max_dist") or 1000
+    local max_dist  = gui_get("cesp_max_dist")  or 1000
     local font_size = gui_get("cesp_font_size") or 14
-
     for _, corpse in ipairs(folder:get_children()) do
         if not utility.is_valid(corpse) then goto cc end
         local root = corpse:find_first_child("HumanoidRootPart")
         if not root then root = corpse:find_first_child("UpperTorso") end
         if not root then root = corpse:find_first_child_of_class("BasePart") end
         if not root then goto cc end
-        local pos = root.Position
-        if not pos then goto cc end
-        local dx   = pos.x - cam_pos.x
-        local dy   = pos.y - cam_pos.y
-        local dz   = pos.z - cam_pos.z
+        local pos = root.Position; if not pos then goto cc end
+        local dx=pos.x-cam_pos.x; local dy=pos.y-cam_pos.y; local dz=pos.z-cam_pos.z
         local dist = math.sqrt(dx*dx+dy*dy+dz*dz)
         if dist > max_dist then goto cc end
-        local sx, sy, on_screen = utility.world_to_screen(pos.x, pos.y, pos.z)
+        local sx,sy,on_screen = utility.world_to_screen(pos.x,pos.y,pos.z)
         if not on_screen then goto cc end
         local label = "Corpse ["..math.floor(dist).."m]"
-        local tw, th = draw.get_text_size(label, font_size)
-        draw.text(sx-tw/2, sy-th/2, label, color, font_size)
+        local tw,th = draw.get_text_size(label,font_size)
+        draw.text(sx-tw/2,sy-th/2,label,color,font_size)
         ::cc::
     end
 end
@@ -1315,14 +1255,13 @@ end
 -- ─── Main on_frame ───────────────────────────────────────────────────────────
 
 function on_frame()
-    local mx, my = utility.get_mouse_pos()
+    local mx,my  = utility.get_mouse_pos()
     mouse_down   = input.is_key_down(0x01)
     rmb_down     = input.is_key_down(0x02)
 
     local lmb_clicked = mouse_down and not mouse_was_down
     local rmb_clicked = rmb_down   and not rmb_was_down
 
-    -- Menu bind
     local cfg_key_elem = all_elements["cfg_menu_key"]
     if cfg_key_elem then
         local parsed = str_to_vk(cfg_key_elem.val)
@@ -1337,7 +1276,6 @@ function on_frame()
     end
     menu_bind_was = bind_now
 
-    -- Keybind listen
     if kb_listening_id then
         for vk=0x01,0xFF do
             if vk~=0x01 and vk~=0x02 and input.is_key_down(vk) then
@@ -1346,16 +1284,15 @@ function on_frame()
                     e.val = vk_to_str(vk)
                     if kb_listening_id=="cfg_menu_key" then
                         local p = str_to_vk(e.val)
-                        if p then menu_bind_vk = p end
+                        if p then menu_bind_vk=p end
                     end
                 end
-                kb_listening_id = nil
-                break
+                kb_listening_id=nil; break
             end
         end
     end
 
-    if not mouse_down then drag_slider_id = nil end
+    if not mouse_down then drag_slider_id=nil end
 
     local menu_captured = menu_open and point_in(mx,my,WIN_X,WIN_Y,WIN_W,WIN_H)
     local overlay_lmb   = lmb_clicked and not menu_captured
@@ -1374,15 +1311,12 @@ function on_frame()
     draw_context_menu(mx, my, lmb_clicked)
 
     if not menu_open then
-        mouse_was_down = mouse_down
-        rmb_was_down   = rmb_down
-        return
+        mouse_was_down=mouse_down; rmb_was_down=rmb_down; return
     end
 
     if lmb_clicked and not point_in(mx,my,WIN_X,WIN_Y,WIN_W,WIN_H) then
         cp_open=false; cp_elem_id=nil; dd_open_id=nil; kb_listening_id=nil
     end
-
     if lmb_clicked and point_in(mx,my,WIN_X,WIN_Y,WIN_W,HDR_H) then
         dragging=true; drag_ox=mx-WIN_X; drag_oy=my-WIN_Y
     end
@@ -1403,22 +1337,22 @@ function on_frame()
     draw.rect_filled(WIN_X,WIN_Y+HDR_H-1,WIN_W,1,C.border_l)
     local bind_str = vk_to_str(menu_bind_vk)
     local htitle   = "nyanwolf.net  |  "..tabs[active_tab].."  |  ["..bind_str.."]"
-    local htw,hth  = draw.get_text_size(htitle, FONT_S)
+    local htw,hth  = draw.get_text_size(htitle,FONT_S)
     dtext(WIN_X+WIN_W/2-htw/2, WIN_Y+HDR_H/2-hth/2, htitle, C.title_text, FONT_S)
 
     -- Tab bar
-    local tab_w = WIN_W / #tabs
-    for i, tname in ipairs(tabs) do
-        local tx   = WIN_X + (i-1)*tab_w
+    local tab_w = WIN_W/#tabs
+    for i,tname in ipairs(tabs) do
+        local tx   = WIN_X+(i-1)*tab_w
         local tcol = i==active_tab and C.tab_active or C.tab_idle
-        dpanel(tx, tab_y, tab_w, TAB_H, tcol, nil)
+        dpanel(tx,tab_y,tab_w,TAB_H,tcol,nil)
         if i==active_tab then
-            draw.rect_filled(tx, tab_y+TAB_H-2, tab_w, 2, C.accent)
+            draw.rect_filled(tx,tab_y+TAB_H-2,tab_w,2,C.accent)
         end
-        if i>1 then draw.rect_filled(tx, tab_y+4, 1, TAB_H-8, C.separator) end
-        local lw2,lh2 = draw.get_text_size(tname, FONT)
-        dtext(tx+tab_w/2-lw2/2, tab_y+TAB_H/2-lh2/2, tname,
-            i==active_tab and C.text_active or C.text_dim, FONT)
+        if i>1 then draw.rect_filled(tx,tab_y+4,1,TAB_H-8,C.separator) end
+        local lw2,lh2=draw.get_text_size(tname,FONT)
+        dtext(tx+tab_w/2-lw2/2,tab_y+TAB_H/2-lh2/2,tname,
+            i==active_tab and C.text_active or C.text_dim,FONT)
         if lmb_clicked and point_in(mx,my,tx,tab_y,tab_w,TAB_H) then
             active_tab=i; active_sel=1
             cp_open=false; cp_elem_id=nil; dd_open_id=nil
@@ -1427,89 +1361,85 @@ function on_frame()
 
     -- Content
     if active_tab == 2 then
-        -- VISUALS: 3-column selection layout
         local col_w = math.floor(WIN_W/3)
         local x1 = WIN_X
-        local x2 = WIN_X + col_w
-        local x3 = WIN_X + col_w*2
+        local x2 = WIN_X+col_w
+        local x3 = WIN_X+col_w*2
 
-        -- Column 1: category selector
-        dpanel(x1, content_y, col_w, content_h, C.panel_dark, nil, 0)
-        draw.rect_filled(x1+col_w-1, content_y, 1, content_h, C.border_l)
-        local stw,sth = draw.get_text_size("selection", FONT_S)
-        draw.rect_filled(x1, content_y, col_w, SEC_H+4, C.section_hdr, 0)
-        draw.rect_filled(x1, content_y, 2, SEC_H+4, C.accent)
-        dtext(x1+PAD_X, content_y+SEC_H/2+2-sth/2, "selection", C.text_dim, FONT_S)
-        draw.rect_filled(x1, content_y+SEC_H+4, col_w, 1, C.separator)
-        local sel_y = content_y + SEC_H + 8
-        for i, cat in ipairs(vis_categories) do
-            local ry = sel_y + (i-1)*ROW_H
+        -- Column 1: selection
+        dpanel(x1,content_y,col_w,content_h,C.panel_dark,nil,0)
+        draw.rect_filled(x1+col_w-1,content_y,1,content_h,C.border_l)
+        local stw,sth=draw.get_text_size("selection",FONT_S)
+        draw.rect_filled(x1,content_y,col_w,SEC_H+4,C.section_hdr,0)
+        draw.rect_filled(x1,content_y,2,SEC_H+4,C.accent)
+        dtext(x1+PAD_X,content_y+SEC_H/2+2-sth/2,"selection",C.text_dim,FONT_S)
+        draw.rect_filled(x1,content_y+SEC_H+4,col_w,1,C.separator)
+        local sel_y = content_y+SEC_H+8
+        for i,cat in ipairs(vis_categories) do
+            local ry = sel_y+(i-1)*ROW_H
             local is_act = i==active_sel
             if is_act then
-                draw.rect_filled(x1+2, ry, col_w-3, ROW_H-1, C.sel_active, 2)
-                draw.rect_filled(x1+2, ry, 2, ROW_H-1, C.accent)
+                draw.rect_filled(x1+2,ry,col_w-3,ROW_H-1,C.sel_active,2)
+                draw.rect_filled(x1+2,ry,2,ROW_H-1,C.accent)
             elseif point_in(mx,my,x1,ry,col_w,ROW_H) then
-                draw.rect_filled(x1+2, ry, col_w-3, ROW_H-1, C.sel_hover, 2)
+                draw.rect_filled(x1+2,ry,col_w-3,ROW_H-1,C.sel_hover,2)
             end
-            local lw2,lh2 = draw.get_text_size(cat, FONT)
-            dtext(x1+PAD_X+6, ry+ROW_H/2-lh2/2, cat,
-                is_act and C.text_active or C.text, FONT)
+            local lw2,lh2=draw.get_text_size(cat,FONT)
+            dtext(x1+PAD_X+6,ry+ROW_H/2-lh2/2,cat,
+                is_act and C.text_active or C.text,FONT)
             if lmb_clicked and point_in(mx,my,x1,ry,col_w,ROW_H) then
                 active_sel=i; cp_open=false; dd_open_id=nil
             end
         end
 
-        -- Column 2: settings
+        -- Column 2: filters
         local cur = vis_categories[active_sel]
-        dpanel(x2, content_y, col_w, content_h, C.panel, nil, 0)
-        draw.rect_filled(x2+col_w-1, content_y, 1, content_h, C.border_l)
-        local c2h = "settings  ("..cur..")"
-        local c2hw,c2hh = draw.get_text_size(c2h, FONT_S)
-        draw.rect_filled(x2, content_y, col_w, SEC_H+4, C.section_hdr, 0)
-        draw.rect_filled(x2, content_y, 2, SEC_H+4, C.accent)
-        dtext(x2+PAD_X, content_y+SEC_H/2+2-c2hh/2, c2h, C.text_dim, FONT_S)
-        draw.rect_filled(x2, content_y+SEC_H+4, col_w, 1, C.separator)
-        draw_column(vis_col2[cur] or {}, x2, content_y+SEC_H+8, col_w, mx, my, lmb_clicked)
+        dpanel(x2,content_y,col_w,content_h,C.panel,nil,0)
+        draw.rect_filled(x2+col_w-1,content_y,1,content_h,C.border_l)
+        local c2h="filters  ("..cur..")"
+        local c2hw,c2hh=draw.get_text_size(c2h,FONT_S)
+        draw.rect_filled(x2,content_y,col_w,SEC_H+4,C.section_hdr,0)
+        draw.rect_filled(x2,content_y,2,SEC_H+4,C.accent)
+        dtext(x2+PAD_X,content_y+SEC_H/2+2-c2hh/2,c2h,C.text_dim,FONT_S)
+        draw.rect_filled(x2,content_y+SEC_H+4,col_w,1,C.separator)
+        draw_column(vis_col2[cur] or {},x2,content_y+SEC_H+8,col_w,mx,my,lmb_clicked)
 
-        -- Column 3: extra options
-        dpanel(x3, content_y, col_w, content_h, C.panel, nil, 0)
-        local c3h = "options  ("..cur..")"
-        local c3hw,c3hh = draw.get_text_size(c3h, FONT_S)
-        draw.rect_filled(x3, content_y, col_w, SEC_H+4, C.section_hdr, 0)
-        draw.rect_filled(x3, content_y, 2, SEC_H+4, C.accent)
-        dtext(x3+PAD_X, content_y+SEC_H/2+2-c3hh/2, c3h, C.text_dim, FONT_S)
-        draw.rect_filled(x3, content_y+SEC_H+4, col_w, 1, C.separator)
-        draw_column(vis_col3[cur] or {}, x3, content_y+SEC_H+8, col_w, mx, my, lmb_clicked)
+        -- Column 3: options
+        dpanel(x3,content_y,col_w,content_h,C.panel,nil,0)
+        local c3h="options  ("..cur..")"
+        local c3hw,c3hh=draw.get_text_size(c3h,FONT_S)
+        draw.rect_filled(x3,content_y,col_w,SEC_H+4,C.section_hdr,0)
+        draw.rect_filled(x3,content_y,2,SEC_H+4,C.accent)
+        dtext(x3+PAD_X,content_y+SEC_H/2+2-c3hh/2,c3h,C.text_dim,FONT_S)
+        draw.rect_filled(x3,content_y+SEC_H+4,col_w,1,C.separator)
+        draw_column(vis_col3[cur] or {},x3,content_y+SEC_H+8,col_w,mx,my,lmb_clicked)
 
     else
-        -- AIMBOT / MISC
         local layout = tab_layouts[active_tab]
         local ncols  = #layout
         if ncols > 0 then
-            local col_w = WIN_W / ncols
-            for ci, col_elems in ipairs(layout) do
-                local cx2 = WIN_X + (ci-1)*col_w
-                dpanel(cx2, content_y, col_w, content_h, C.panel_dark, nil, 0)
-                if ci < ncols then
-                    draw.rect_filled(cx2+col_w-1, content_y, 1, content_h, C.separator)
+            local col_w = WIN_W/ncols
+            for ci,col_elems in ipairs(layout) do
+                local cx2 = WIN_X+(ci-1)*col_w
+                dpanel(cx2,content_y,col_w,content_h,C.panel_dark,nil,0)
+                if ci<ncols then
+                    draw.rect_filled(cx2+col_w-1,content_y,1,content_h,C.separator)
                 end
                 if col_elems then
-                    draw_column(col_elems, cx2, content_y+2, col_w, mx, my, lmb_clicked)
+                    draw_column(col_elems,cx2,content_y+2,col_w,mx,my,lmb_clicked)
                 end
             end
         end
     end
 
-    draw.rect(WIN_X, WIN_Y, WIN_W, WIN_H, C.border_l, 2, 1.0)
+    draw.rect(WIN_X,WIN_Y,WIN_W,WIN_H,C.border_l,2,1.0)
 
-    -- Deferred overlays
-    for _, cp in ipairs(pending_colorpickers) do
-        draw_colorpicker(cp.elem, cp.px, cp.py, mx, my, lmb_clicked)
+    for _,cp in ipairs(pending_colorpickers) do
+        draw_colorpicker(cp.elem,cp.px,cp.py,mx,my,lmb_clicked)
     end
-    for _, dd in ipairs(pending_dropdowns) do
-        draw_dropdown(dd.elem, dd.dd_x, dd.dd_y, dd.dd_w, mx, my, lmb_clicked)
+    for _,dd in ipairs(pending_dropdowns) do
+        draw_dropdown(dd.elem,dd.dd_x,dd.dd_y,dd.dd_w,mx,my,lmb_clicked)
     end
 
-    mouse_was_down = mouse_down
-    rmb_was_down   = rmb_down
+    mouse_was_down=mouse_down; rmb_was_down=rmb_down
 end
