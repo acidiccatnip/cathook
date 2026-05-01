@@ -1,5 +1,4 @@
-# cathook
-# cathook - some game scripts for roblox externals. (˶>⩊&lt;˶)
+# cathook (nyanwolf) - some game scripts for roblox externals. (˶>⩊&lt;˶)
 
 # Vector:
 `[🟢] -> Deadline`
