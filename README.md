@@ -19,3 +19,15 @@ Beforemath
 ```lua
 loadstring(utility.http_get("https://raw.githubusercontent.com/acidiccatnip/cathook/refs/heads/main/scripts/vector/beforemath.lua"))()
 ```
+
+
+# Loadstring (RbxCli) (in dev)
+
+Fallen Survival
+```lua
+loadstring(utility.http_get("https://raw.githubusercontent.com/acidiccatnip/cathook/refs/heads/main/scripts/rbxcli/fallensurvival.lua"))()
+```
+Project Delta
+```lua
+loadstring(utility.http_get("https://raw.githubusercontent.com/acidiccatnip/cathook/refs/heads/main/scripts/rbxcli/projectdelta.lua"))()
+```
