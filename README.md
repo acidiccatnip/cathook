@@ -25,9 +25,9 @@ loadstring(utility.http_get("https://raw.githubusercontent.com/acidiccatnip/cath
 
 Fallen Survival
 ```lua
-loadstring(utility.http_get("https://raw.githubusercontent.com/acidiccatnip/cathook/refs/heads/main/scripts/rbxcli/fallensurvival.lua"))()
+no load string 😭
 ```
 Project Delta
 ```lua
-loadstring(utility.http_get("https://raw.githubusercontent.com/acidiccatnip/cathook/refs/heads/main/scripts/rbxcli/projectdelta.lua"))()
+no load string 😭
 ```
